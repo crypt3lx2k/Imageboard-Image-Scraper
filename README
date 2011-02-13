@@ -1,7 +1,7 @@
 To use, simply pass the thread as a command line argument
 ex:
 
-$ python imagescraper.py http://boards.4chan.org/g/res/15898894#15899068
+$ python imagescraper.py http://boards.4chan.org/g/res/15898894
 
 Which will create (if it doesn't exist) a g/15898894/ directory and download the images to that location.
 
