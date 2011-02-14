@@ -39,7 +39,7 @@ class DownloadWorker(threading.Thread):
         
         self.sema.acquire()
 
-        sys.stdout("Starting download of %s\n" % (self.url))
+        sys.stdout.write("Starting download of %s\n" % (self.url))
 
         fp = open(filename, "w")
         up = urllib2.urlopen(self.url)
