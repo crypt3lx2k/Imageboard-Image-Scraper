@@ -32,10 +32,16 @@ class DownloadWorker(threading.Thread):
         self.url, self.sema  = url, sema
 
     def run(self):
-        self.sema.acquire()
-        print "Starting download of %s" % (self.url)
+        filename = self.url.split("/")[-1]
 
-        fp = open(self.url.split("/")[-1], "w")
+        if os.path.exists(filename):
+            return
+        
+        self.sema.acquire()
+
+        sys.stdout("Starting download of %s\n" % (self.url))
+
+        fp = open(filename, "w")
         up = urllib2.urlopen(self.url)
 
         fp.write(up.read())
