@@ -8,7 +8,7 @@ import urllib2
 import threading
 
 start = time.time()
-maxthreads = 16
+maxthreads = 32
 
 try:
     urlname = sys.argv[1]
