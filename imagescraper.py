@@ -1,75 +1,90 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 
-import os
-import sys
-import time
-import glob
-import urllib2
+import re
 import threading
+import urllib2
 
-start = time.time()
 maxthreads = 32
+downloadedFiles = []
 
-try:
-    urlname = sys.argv[1]
-    boardname  = urlname.split("/")[-3]
-    threadname = urlname.split("/")[-1]
-except:
-    print "Usage: %s linktothread" % (sys.argv[0])
+def usage():
+    print """Usage: %s linktothread""" % (sys.argv[0])
     exit(1)
-
-if not os.path.exists(boardname):
-    os.mkdir(boardname)
-os.chdir(boardname)
-
-if not os.path.exists(threadname):
-    os.mkdir(threadname)
-os.chdir(threadname)
 
 class DownloadWorker(threading.Thread):
     def __init__(self, url, sema):
-        threading.Thread.__init__(self)
+        super(DownloadWorker, self).__init__()
         self.url, self.sema  = url, sema
 
     def run(self):
-        filename = self.url.split("/")[-1]
+        filename, = \
+            re.search(r"http://images\.4chan\.org/\w+/src/(\d+\.\w+)",
+                      self.url).groups()
 
         if os.path.exists(filename):
             return
+
+        sys.stdout.write("Starting download of %s\n" % (self.url))
         
         self.sema.acquire()
 
-        sys.stdout.write("Starting download of %s\n" % (self.url))
-
         fp = open(filename, "w")
         up = urllib2.urlopen(self.url)
-
         fp.write(up.read())
+
+        self.sema.release()
 
         up.close()
         fp.close()
 
-        self.sema.release()
+        downloadedFiles.append(filename)
 
-websema = threading.BoundedSemaphore(maxthreads)
-threadp = urllib2.urlopen(urlname)
+if __name__ == "__main__":
+    import sys
+    import os
+    import time
 
-for line in threadp:
-    if not "http://images.4chan.org/" in line:
-        continue
+    try:
+        url = sys.argv[1]
 
-    imgurl = line[line.index("http://images.4chan.org/"):].split("\"")[0]
-    tempthread = DownloadWorker(imgurl, websema)
-    tempthread.start()
+        boardname, threadname = \
+            re.search(r"http://boards\.4chan\.org/(\w+)/res/(\d+)",
+                      url).groups()
+    except AttributeError as e:
+        print "%s is not a valid 4chan thread url!" % (url)
+        usage()
+    except:
+        usage()
 
-for thread in threading.enumerate():
-    if thread is not threading.currentThread():
-        thread.join()
+    if not os.path.exists(boardname):
+        os.mkdir(boardname)
+    os.chdir(boardname)
 
-end = time.time()
+    if not os.path.exists(threadname):
+        os.mkdir(threadname)
+    os.chdir(threadname)
 
-bytes = 0
-for filename in glob.glob("*"):
-    bytes += os.path.getsize(filename)
+    websema = threading.BoundedSemaphore(maxthreads)
+    thread  = urllib2.urlopen(url)
+    imageurls = \
+        set(re.findall(r"(http://images\.4chan\.org/\w+/src/\d+\.\w+)",
+                       thread.read()))
 
-print "Downloaded: %d bytes in %g seconds: %g bytes per second" % (bytes, float(end - start), float(bytes)/(end-start))
+    start = time.time()
+
+    for imageurl in imageurls:
+        tempthread = DownloadWorker(imageurl, websema)
+        tempthread.start()
+
+    for thread in threading.enumerate():
+        if thread is not threading.currentThread():
+            thread.join()
+
+    end = time.time()
+
+    if downloadedFiles:
+        bytes = 0
+        for filename in downloadedFiles:
+            bytes += os.path.getsize(filename)
+
+        print "Downloaded: %d bytes in %g seconds: %g bytes per second" % (bytes, float(end - start), float(bytes)/(end-start))
