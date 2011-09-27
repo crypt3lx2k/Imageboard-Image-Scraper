@@ -16,7 +16,9 @@ def usage():
     exit(1)
 
 try:
-    url = sys.argv[1]
+    url, = \
+        re.search(r"(http://boards\.4chan\.org/\w+/res/\d+)(?:#\d+)?",
+                  sys.argv[1]).groups()
 
     boardname, threadname = \
         re.search(r"http://boards\.4chan\.org/(\w+)/res/(\d+)",
