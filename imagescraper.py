@@ -1,91 +1,64 @@
 #! /usr/bin/env python
 
-import re
-import threading
-import urllib2
-
-import sys
 import os
-import time
+import sys
+import argparse
+import Lib
 
-maxthreads = 32
-downloadedFiles = []
+parser = argparse.ArgumentParser(
+    description="Download images from 4chan into a directory hierarchy."
+    )
 
-def usage():
-    print """Usage: %s linktothread""" % (sys.argv[0])
+parser.add_argument(
+    "links", type=str, nargs="+",
+    help="links to 4chan threads or boards"
+    )
+parser.add_argument(
+    "--version", action="version",
+    version="%(prog)s v1.0",
+    help="show the version of this program and exit"
+    )
+parser.add_argument(
+    "-t", "--threads", metavar="n", type=int,
+    help="number of threads to use for multi-threading"
+    )
+parser.add_argument(
+    "-o", "--output", metavar="directory", type=str,
+    default=".",
+    help="where to create the directory hierarchy"
+    )
+parser.add_argument(
+    "-q", "--quiet", action="store_true",
+    help="do not print messages to screen"
+    )
+
+args = parser.parse_args()
+
+def quietly_print(s, outfile=sys.stdout):
+    if not args.quiet:
+        outfile.write(s + os.linesep)
+
+max_threads = 32 if args.threads is None else args.threads
+
+if not os.path.isdir(args.output):
+    print >> sys.stderr, "Error: %s is not a valid directory." % (args.output)
+else:
+    os.chdir(args.output)
+
+links = []
+for link in args.links:
+    try:
+        links.append(Lib.Link.classify(link))
+    except Exception as e:
+        quietly_print("Error while processing link %s, will continue if at all possible." % (e))
+
+if not links:
+    print >> sys.stderr, "No valid links, exiting with failure."
     exit(1)
 
-try:
-    url, = \
-        re.search(r"(http://boards\.4chan\.org/\w+/res/\d+)(?:#\d+)?",
-                  sys.argv[1]).groups()
+pool = Lib.Threads.ThreadPool(max_threads)
 
-    boardname, threadname = \
-        re.search(r"http://boards\.4chan\.org/(\w+)/res/(\d+)",
-                  url).groups()
-except AttributeError as e:
-    print "%s is not a valid 4chan thread url!" % (url)
-    usage()
-except:
-    usage()
+for link in links:
+    pool.push(link)
 
-if not os.path.exists(boardname):
-    os.mkdir(boardname)
-os.chdir(boardname)
-
-if not os.path.exists(threadname):
-    os.mkdir(threadname)
-os.chdir(threadname)
-
-class DownloadWorker(threading.Thread):
-    def __init__(self, url, sema):
-        super(DownloadWorker, self).__init__()
-        self.url, self.sema  = url, sema
-
-    def run(self):
-        filename, = \
-            re.search(r"http://images\.4chan\.org/\w+/src/(\d+\.\w+)",
-                      self.url).groups()
-
-        if os.path.exists(filename):
-            return
-
-        sys.stdout.write("Starting download of %s\n" % (self.url))
-        
-        self.sema.acquire()
-
-        fp = open(filename, "w")
-        up = urllib2.urlopen(self.url)
-        fp.write(up.read())
-
-        self.sema.release()
-
-        up.close()
-        fp.close()
-
-        downloadedFiles.append(filename)
-
-websema = threading.BoundedSemaphore(maxthreads)
-thread  = urllib2.urlopen(url)
-imageurls = \
-    set(re.findall(r"(http://images\.4chan\.org/\w+/src/\d+\.\w+)",
-                   thread.read()))
-
-start = time.time()
-
-for imageurl in imageurls:
-    tempthread = DownloadWorker(imageurl, websema)
-    tempthread.start()
-
-for thread in threading.enumerate():
-    if thread is not threading.currentThread():
-        thread.join()
-
-end = time.time()
-
-if downloadedFiles:
-    bytes = 0
-    for filename in downloadedFiles:
-        bytes += os.path.getsize(filename)
-
-    print "Downloaded: %d bytes in %g seconds: %g bytes per second" % (bytes, float(end - start), float(bytes)/(end-start))
+pool.join()
