@@ -4,6 +4,7 @@ import urllib2 as _urllib2
 import threading as _threading
 
 import Link as _Link
+import Globals as _Globals
 
 class ThreadPool(object):
     """
@@ -72,20 +73,33 @@ class ThreadPool(object):
         def run(self):
             content = self.download()
 
-            # Get Images
-            images = set(
-                _re.findall(r"(http://images\.4chan\.org/\w+/src/\d+\.\w+)",
-                            content)
-                )
-
             # Set up Dirs
             if not _os.path.exists(self.url.getDir()):
                 _os.makedirs(self.url.getDir())
 
+            # Get Images
+            if _Globals.globals.keep_names:
+                images = {}
+
+                pairs = _re.findall(r"\<span title=\"(.+)\"\>.*\<a href=\"(http://images\.4chan\.org/\w+/src/\d+\.\w+)\"",
+                                    content)
+
+                for value, key in pairs:
+                    images[key] = value
+            else:
+                images = set(
+                    _re.findall(r"(http://images\.4chan\.org/\w+/src/\d+\.\w+)",
+                                content)
+                    )
+
             for image in images:
-                image = _Link.ImageLink(image)
-                image.setParent(self.url)
-                self.push(image)
+                link = _Link.ImageLink(image)
+                link.setThread(self.url)
+
+                if _Globals.globals.keep_names:
+                    link.name = images[image]
+
+                self.push(link)
 
     class ImageWorker(Worker):
         """
@@ -140,3 +154,5 @@ class ThreadPool(object):
         """
         for thread in self.spawned:
             thread.join()
+
+        self.spawned = []

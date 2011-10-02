@@ -19,7 +19,7 @@ parser.add_argument(
     help="show the version of this program and exit"
     )
 parser.add_argument(
-    "-t", "--threads", metavar="n", type=int,
+    "-t", "--threads", metavar="n", type=int, default = 32,
     help="number of threads to use for multi-threading"
     )
 parser.add_argument(
@@ -31,14 +31,16 @@ parser.add_argument(
     "-q", "--quiet", action="store_true",
     help="do not print messages to screen"
     )
+parser.add_argument(
+    "-k", "--keep-names", action="store_true",
+    help="keep original names on images"
+    )
 
 args = parser.parse_args()
 
 def quietly_print(s, outfile=sys.stdout):
     if not args.quiet:
         outfile.write(s + os.linesep)
-
-max_threads = 32 if args.threads is None else args.threads
 
 if not os.path.isdir(args.output):
     print >> sys.stderr, "Error: %s is not a valid directory." % (args.output)
@@ -56,7 +58,9 @@ if not links:
     print >> sys.stderr, "No valid links, exiting with failure."
     exit(1)
 
-pool = Lib.Threads.ThreadPool(max_threads)
+Lib.globals.acquire(args)
+
+pool = Lib.Threads.ThreadPool(args.threads)
 
 for link in links:
     pool.push(link)

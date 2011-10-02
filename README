@@ -15,23 +15,25 @@ It's also possible to change the output directory (default: current directory)
 ex:
 $ python imagescraper.py -o ~/Pictures/4chan/ http://boards.4chan.org/g/res/15898894
 
+You may also keep the names the files were uploaded with using the -k option.
+
 This is the help message produced by the -h option:
-usage: imagescraper.py [-h] [--version] [-t n] [-o directory] [-q]
+usage: imagescraper.py [-h] [--version] [-t n] [-o directory] [-q] [-k]
                        links [links ...]
 
 Download images from 4chan into a directory hierarchy.
 
 positional arguments:
-  links                 link to a 4chan thread or board if the --board/-b
-                        option is specified
+  links                 links to 4chan threads or boards
 
 optional arguments:
   -h, --help            show this help message and exit
-  --version             prints the version and exits
+  --version             show the version of this program and exit
   -t n, --threads n     number of threads to use for multi-threading
   -o directory, --output directory
                         where to create the directory hierarchy
-  -q, --quiet           do not print messages to screen, mutually exclusive
-                        with -v/--verbose
+  -q, --quiet           do not print messages to screen
+  -k, --keep-names      keep original names on images
+
 
 I initially don't really plan to work on this very much but I have some ideas, feel free to mail me with ideas for features or bugs at trulses@gmail.com
