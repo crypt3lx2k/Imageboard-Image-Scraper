@@ -5,20 +5,9 @@ $ python imagescraper.py http://boards.4chan.org/g/res/15898894
 Which will create (if it doesn't exist) a g/15898894/ directory and download the images to that location.
 You may also give links to 4chan boards as arguments.
 
-It's possible to change the amount of threads used to download images (default: 32)
-ex:
-$ python imagescraper.py -t 16 http://boards.4chan.org/g/res/15898894
-
-Which will force the program to at most download 16 images simulatenously.
-
-It's also possible to change the output directory (default: current directory)
-ex:
-$ python imagescraper.py -o ~/Pictures/4chan/ http://boards.4chan.org/g/res/15898894
-
-You may also keep the names the files were uploaded with using the -k option.
-
 This is the help message produced by the -h option:
 usage: imagescraper.py [-h] [--version] [-t n] [-o directory] [-q] [-k]
+                       [-l [time]]
                        links [links ...]
 
 Download images from 4chan into a directory hierarchy.
@@ -34,6 +23,10 @@ optional arguments:
                         where to create the directory hierarchy
   -q, --quiet           do not print messages to screen
   -k, --keep-names      keep original names on images
+  -l [time], --listen [time]
+                        download images continually from link, accepts an
+                        optional format string for time where you specify
+                        minutes with m and seconds with s example: "1m30s"
 
 
 I initially don't really plan to work on this very much but I have some ideas, feel free to mail me with ideas for features or bugs at trulses@gmail.com

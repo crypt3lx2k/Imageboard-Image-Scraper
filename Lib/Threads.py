@@ -115,6 +115,8 @@ class ThreadPool(object):
             if _os.path.exists(absPath):
                 return
 
+            _Globals.globals.downloadedFiles.append(absPath)
+
             self.acquire()
 
             fp = open(absPath, "w")
