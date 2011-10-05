@@ -139,6 +139,9 @@ def classify(link):
     if not isinstance(link, str):
         raise TypeError("%s object is not convertible to link." % (type(link)))
 
+    if not link.startswith("http://"):
+        link = "http://" + link
+
     link = link.replace("www", "boards", 1)
 
     if _re.search(r"(http://boards\.4chan\.org/\w+/res/\d+)",
