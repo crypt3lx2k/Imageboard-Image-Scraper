@@ -88,6 +88,7 @@ if not links:
 
 pool = Lib.Threads.ThreadPool(args.threads)
 Lib.globals.downloadedFiles = []
+Lib.globals.links = links
 
 timer = 0
 def report():
@@ -103,7 +104,7 @@ def report():
 
         Lib.globals.downloadedFiles = []
 
-while True:
+while links:
     try:
         timer = time.time()
 
@@ -124,5 +125,6 @@ while True:
         if timer < update_interval:
             quietly_print("sleeping for %f seconds" % (update_interval - timer))
             time.sleep(update_interval - timer)
-    except:
+    except Exception as e:
+        quietly_print("Recieved: %s" % (e))
         exit(0)

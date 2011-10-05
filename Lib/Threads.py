@@ -1,5 +1,6 @@
 import re as _re
 import os as _os
+import sys as _sys
 import urllib2 as _urllib2
 import threading as _threading
 
@@ -24,7 +25,17 @@ class ThreadPool(object):
             """
             Downloads the contents of the url.
             """
-            return _urllib2.urlopen(self.url).read()
+            try:
+                return _urllib2.urlopen(self.url).read()
+            except _urllib2.HTTPError as e:
+                if self.url in _Globals.globals.links:
+                    print >> _sys.stderr, "Recieved `%s' while trying to read link %s, removing it from links." % (
+                        e, self.url
+                        )
+
+                    _Globals.globals.links.remove(self.url)
+
+            return ""
 
         def push(self, url):
             """
@@ -111,7 +122,6 @@ class ThreadPool(object):
         def run(self):
             absPath = self.url.getAbsPath()
 
-            # Don't re-download existing images.
             if _os.path.exists(absPath):
                 return
 
