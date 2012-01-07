@@ -25,17 +25,19 @@ class ThreadPool(object):
             """
             Downloads the contents of the url.
             """
-            try:
-                return _urllib2.urlopen(self.url).read()
-            except _urllib2.HTTPError as e:
-                if self.url in _Globals.globals.links:
-                    print >> _sys.stderr, "Recieved `%s' while trying to read link %s, removing it from links." % (
-                        e, self.url
-                        )
+            while True:
+                try:
+                    return _urllib2.urlopen(self.url).read()
+                except _urllib2.HTTPError as e:
+                    if self.url in _Globals.globals.links:
+                        print >> _sys.stderr, "Recieved `%s' while trying to read link %s, removing it from links." % (
+                            e, self.url
+                            )
 
-                    _Globals.globals.links.remove(self.url)
-
-            return ""
+                        _Globals.globals.links.remove(self.url)
+                    return ""
+                except _urllib2.URLError:
+                    continue
 
         def push(self, url):
             """
