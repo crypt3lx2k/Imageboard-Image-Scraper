@@ -36,7 +36,7 @@ class ThreadPool(object):
 
                         _Globals.globals.links.remove(self.url)
                     return ""
-                except _urllib2.URLError:
+                except _urllib2.URLError as e:
                     continue
 
         def push(self, url):
@@ -94,19 +94,19 @@ class ThreadPool(object):
             if _Globals.globals.keep_names:
                 images = {}
 
-                pairs = _re.findall(r"\<span title=\"(.+)\"\>.*\<a href=\"(http://images\.4chan\.org/\w+/src/\d+\.\w+)\"",
+                pairs = _re.findall(r"<a href=\"(//images\.4chan\.org/\w+/src/\d+\.\w+)\".*?\<span title=\"(.*?)\">",
                                     content)
 
-                for value, key in pairs:
+                for key, value in pairs:
                     images[key] = value
             else:
                 images = set(
-                    _re.findall(r"(http://images\.4chan\.org/\w+/src/\d+\.\w+)",
+                    _re.findall(r"(//images\.4chan\.org/\w+/src/\d+\.\w+)",
                                 content)
                     )
 
             for image in images:
-                link = _Link.ImageLink(image)
+                link = _Link.ImageLink('http:' + image)
                 link.setThread(self.url)
 
                 if _Globals.globals.keep_names:

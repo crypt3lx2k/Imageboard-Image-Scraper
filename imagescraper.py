@@ -9,41 +9,47 @@ import Lib
 
 parser = argparse.ArgumentParser(
     description="Download images from 4chan into a directory hierarchy."
-    )
+)
 
 parser.add_argument(
     "links", type=str, nargs="+",
     help="links to 4chan threads or boards"
-    )
+)
+
 parser.add_argument(
     "--version", action="version",
     version="%(prog)s v1.0",
     help="show the version of this program and exit"
-    )
+)
+
 parser.add_argument(
     "-t", "--threads", metavar="n", type=int, default = 32,
     help="number of threads to use for multi-threading"
-    )
+)
+
 parser.add_argument(
     "-o", "--output", metavar="directory", type=str,
     default=".",
     help="where to create the directory hierarchy"
-    )
+)
+
 parser.add_argument(
     "-q", "--quiet", action="store_true",
     help="do not print messages to screen"
-    )
+)
+
 parser.add_argument(
     "-k", "--keep-names", action="store_true",
     help="keep original names on images"
-    )
+)
+
 parser.add_argument(
     "-l", "--listen", nargs="?",
     const="1m", metavar="time",
     help='''download images continually from link,
 accepts an optional format string for time where you specify minutes with m and seconds with s
 example: \"1m30s\"'''
-    )
+)
 
 args = parser.parse_args()
 Lib.globals.acquire(args)
