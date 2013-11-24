@@ -94,14 +94,14 @@ class ThreadPool(object):
             if _Globals.globals.keep_names:
                 images = {}
 
-                pairs = _re.findall(r"<a href=\"(//images\.4chan\.org/\w+/src/\d+\.\w+)\".*?\<span title=\"(.*?)\">",
+                pairs = _re.findall(r"<a href=\"(//i\.4cdn\.org/\w+/src/\d+\.\w+)\".*?\<span title=\"(.*?)\">",
                                     content)
 
                 for key, value in pairs:
                     images[key] = value
             else:
                 images = set(
-                    _re.findall(r"(//images\.4chan\.org/\w+/src/\d+\.\w+)",
+                    _re.findall(r"(//i\.4cdn\.org/\w+/src/\d+\.\w+)",
                                 content)
                     )
 

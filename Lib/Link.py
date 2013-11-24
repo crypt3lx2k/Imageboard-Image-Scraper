@@ -50,7 +50,7 @@ class ImageLink(Link):
         Returns the name of the image.
         """
         if self.name is None:
-            self.name, = _re.search(r"http://images\.4chan\.org/\w+/src/(\d+\.\w+)",
+            self.name, = _re.search(r"http://i\.4cdn\.org/\w+/src/(\d+\.\w+)",
                                     self).groups()
 
         return self.name
