@@ -50,7 +50,7 @@ class ImageLink(Link):
         Returns the name of the image.
         """
         if self.name is None:
-            self.name, = _re.search(r"http://i\.4cdn\.org/\w+/src/(\d+\.\w+)",
+            self.name, = _re.search(r"http://i\.4cdn\.org/\w+/(\d+\.\w+)",
                                     self).groups()
 
         return self.name
@@ -108,7 +108,7 @@ class ThreadLink(Link):
         Stores board name and thread number.
         """
         self.board, self.thread = \
-            _re.search(r"http://(?:www|boards)\.4chan\.org/(\w+)/res/(\d+)",
+            _re.search(r"http://(?:www|boards)\.4chan\.org/(\w+)/thread/(\d+)",
                        self).groups()        
 
     def getBoard(self):
@@ -144,7 +144,7 @@ def classify(link):
 
     link = link.replace("www", "boards", 1)
 
-    if _re.search(r"(http://boards\.4chan\.org/\w+/res/\d+)",
+    if _re.search(r"(http://boards\.4chan\.org/\w+/thread/\d+)",
                   link):
         return ThreadLink(link)
     elif _re.search(r"(http://boards\.4chan\.org/\w+)",
