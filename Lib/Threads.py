@@ -106,7 +106,7 @@ class ThreadPool(object):
                     )
 
             for image in images:
-                link = _Link.ImageLink('http:' + image)
+                link = _Link.ImageLink('https:' + image)
                 link.setThread(self.url)
 
                 if _Globals.globals.keep_names:
