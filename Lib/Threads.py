@@ -94,7 +94,7 @@ class ThreadPool(object):
             if _Globals.globals.keep_names:
                 images = {}
 
-                pairs = _re.findall(r"<a href=\"(//i\.4cdn\.org/\w+/\d+\.\w+)\".*?\<span title=\"(.*?)\">",
+                pairs = _re.findall(r"<a href=\"(//i\.4cdn\.org/\w+/\d+\.\w+)\".*?\>(.*?)\</a\>",
                                     content)
 
                 for key, value in pairs:
