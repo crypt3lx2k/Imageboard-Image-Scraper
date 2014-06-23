@@ -99,10 +99,24 @@ class ThreadPool(object):
             if _Globals.globals.keep_names:
                 images = {}
 
-                pairs = _re.findall(r"<a href=\"(//i\.4cdn\.org/\w+/\d+\.\w+)\".*?\>(.*?)\</a\>",
-                                    content)
+                pairs = _re.findall(r"<a (?:title=\"([^\"]*?)\" )?href=\"(//i\.4cdn\.org/\w+/\d+\.\w+).*?\>(.*?)\<\/a>", content)
 
-                for key, value in pairs:
+                image_names = []
+
+                for val1, key, val2 in pairs:
+                    if val1:
+                        value = val1
+
+                        if val1 in image_names:
+                            value = key.split('/')[-1]  # no overlapping image names
+                    elif val2:
+                        value = val2
+
+                        if val2 == 'Spoiler Image' or val2 in image_names:
+                            value = key.split('/')[-1]  # spoiler image or overlapping image name
+
+                    image_names.append(value)
+
                     images[key] = value
             else:
                 images = set(
