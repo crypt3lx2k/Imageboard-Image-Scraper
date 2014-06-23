@@ -41,7 +41,7 @@ import os
 import re
 import sys
 import time
-from docopt import docopt
+from Lib.ext.docopt import docopt
 import Lib
 
 args = docopt(__doc__, version=_version)
