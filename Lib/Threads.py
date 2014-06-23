@@ -6,6 +6,7 @@ import threading as _threading
 
 import Link as _Link
 import Globals as _Globals
+import StaticFiles as _StaticFiles
 
 class ThreadPool(object):
     """
@@ -90,6 +91,10 @@ class ThreadPool(object):
             if not _os.path.exists(self.url.getDir()):
                 _os.makedirs(self.url.getDir())
 
+            if _Globals.globals.save_page:
+                if not _os.path.exists(self.url.getStaticDir()):
+                    _os.makedirs(self.url.getStaticDir())
+
             # Get Images
             if _Globals.globals.keep_names:
                 images = {}
@@ -113,6 +118,56 @@ class ThreadPool(object):
                     link.name = images[image]
 
                 self.push(link)
+
+            # Save page HTML
+            if _Globals.globals.save_page and content:  # don't save page html if 404 (thread deleted)
+                converted_content = content  # have to change all the links below
+
+                # replacing image URLs
+                for original_image_url in images:
+                    if _Globals.globals.keep_names:
+                        new_name = images[original_image_url]
+                    else:
+                        link = _Link.ImageLink('https:' + original_image_url)
+                        new_name = link.getName()
+
+                    converted_content = converted_content.replace(original_image_url, new_name)
+
+                # replacing thumbnail urls
+                thumbnail_list = set(_re.findall(r"\<img src=\"(//[0-9]+\.t\.4cdn\.org/\w+/([0-9]+)s\.jpg)\"", content))
+
+                for url, image_number in thumbnail_list:
+                    new_image_filename = None
+
+                    # discover which image it is we're looking for
+                    for image_url in images:
+                        if image_number in image_url:
+                            if _Globals.globals.keep_names:
+                                new_image_filename = images[image_url]
+                            else:
+                                link = _Link.ImageLink('https:' + image_url)
+                                new_image_filename = link.getName()
+
+                    if new_image_filename is None:
+                        print 'image filename not discovered for thumbnail:', image_number, url  # shouldn't happen
+                        continue
+
+                    converted_content = converted_content.replace(url, new_image_filename)
+
+                # downloading static files, and replacing filenames
+                static = _StaticFiles.StaticFileHandler()
+                for url in static.extract_static_urls(content):
+                    static.download(url, self.url.getStaticDir())
+                    new_filename = _os.path.join('static', url.lstrip('/'))
+                    # we don't wanna load the js, doesn't add much and hits 4ch servers when we load the page
+                    if url.endswith('.js'):
+                        new_filename += '.dontload'
+                    converted_content = converted_content.replace(url, new_filename)
+
+                # Write file
+                page_filename = _os.path.join(self.url.getDir(), '{}.html'.format(self.url.getThreadNumber()))
+                with open(page_filename, 'w') as page_file:
+                    page_file.write(converted_content)
 
     class ImageWorker(Worker):
         """

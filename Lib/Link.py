@@ -92,6 +92,7 @@ class ThreadLink(Link):
         self.board  = None
         self.thread = None
         self.dir    = None
+        self.static_dir = None
 
     def getDir(self):
         """
@@ -102,6 +103,17 @@ class ThreadLink(Link):
                                      self.getThreadNumber())
 
         return self.dir
+
+    def getStaticDir(self):
+        """
+        Returns the directory that holds the static (css/js/etc) files for this thread.
+        """
+        if self.static_dir is None:
+            self.static_dir = _os.path.join(self.getBoard(),
+                                            self.getThreadNumber(),
+                                            'static')
+
+        return self.static_dir
 
     def _parseURL(self):
         """

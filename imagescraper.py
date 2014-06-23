@@ -11,7 +11,7 @@ Example:
     You may also give links to 4chan boards as arguments.
 
 Usage:
-  imagescrapter.py [-q] [-k] [-t <num>] [-o <dir>] [-l <time>] <links>...
+  imagescrapter.py [-q] [-k] [-p] [-t <num>] [-o <dir>] [-l <time>] <links>...
   imagescrapter.py -h | --help
   imagescrapter.py --version
 
@@ -23,11 +23,12 @@ Options:
   --version            Show version.
   -q, --quiet          Do not print messages to screen
   -k, --keep-names     Keep original image names
+  -p, --save-page      Save the thread html as well, to open up later
   -t, --threads <num>  Number of threads to use for multi-threading [default: 32]
   -o, --output <dir>   Where to create the directory hierarchy [default: .]
   -l, --listen <time>  Download images continuiously from given link. Accepts an
                        optional format string where you specify minutes with 'm'
-                       and seconds with 's' [example: 1m0s]
+                       and seconds with 's' [example: 1m30s]
 
 Requirements:
   Python2.
@@ -48,6 +49,7 @@ args = docopt(__doc__, version=_version)
 Lib.globals.acquire({
     'quiet': args['--quiet'],
     'keep_names': args['--keep-names'],
+    'save_page': args['--save-page'],
     'threads': int(args['--threads']),
     'output': args['--output'],
     'listen': args['--listen'],
