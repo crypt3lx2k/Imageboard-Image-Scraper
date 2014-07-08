@@ -46,9 +46,6 @@ import Lib
 
 args = docopt(__doc__, version=_version)
 
-print args
-exit(0)
-
 Lib.globals.acquire({
     'quiet': args['--quiet'],
     'keep_names': args['--keep-names'],
