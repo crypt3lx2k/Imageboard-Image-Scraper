@@ -1,32 +1,30 @@
+Imageboard Image Scraper.
 To use, simply pass the thread as a command line argument
-ex:
-$ python imagescraper.py http://boards.4chan.org/g/thread/15898894
 
-Which will create (if it doesn't exist) a g/15898894/ directory and download the images to that location.
-You may also give links to 4chan boards as arguments.
+Example:
+    $ ./imagescraper.py http://boards.4chan.org/g/thread/15898894
 
-This is the help message produced by the -h option:
-usage: imagescraper.py [-h] [--version] [-t n] [-o directory] [-q] [-k]
-                       [-l [time]]
-                       links [links ...]
+    This will create a g/15898894/ directory and download the images to that folder.
+    You may also give links to 4chan boards as arguments.
 
-Download images from 4chan into a directory hierarchy.
+Usage:
+  imagescraper.py [-q] [-k] [-t <num>] [-o <dir>] [-l <time>] <links>...
+  imagescraper.py -h | --help
+  imagescraper.py --version
 
-positional arguments:
-  links                 links to 4chan threads or boards
+Arguments:
+  <link>    Links to 4chan threads or boards
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --version             show the version of this program and exit
-  -t n, --threads n     number of threads to use for multi-threading
-  -o directory, --output directory
-                        where to create the directory hierarchy
-  -q, --quiet           do not print messages to screen
-  -k, --keep-names      keep original names on images
-  -l [time], --listen [time]
-                        download images continually from link, accepts an
-                        optional format string for time where you specify
-                        minutes with m and seconds with s example: "1m30s"
+Options:
+  -h, --help           Show this screen.
+  --version            Show version.
+  -q, --quiet          Do not print messages to screen
+  -k, --keep-names     Keep original image names
+  -t, --threads <num>  Number of threads to use for multi-threading [default: 32]
+  -o, --output <dir>   Where to create the directory hierarchy [default: .]
+  -l, --listen <time>  Download images continuiously from given link. Accepts an
+                       optional format string where you specify minutes with 'm'
+                       and seconds with 's' [example: 1m0s]
 
 
 I initially don't really plan to work on this very much but I have some ideas, feel free to mail me with ideas for features or bugs at trulses@gmail.com

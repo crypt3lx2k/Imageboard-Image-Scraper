@@ -1,73 +1,75 @@
-#! /usr/bin/env python
+#!/usr/bin/env python2
+# Imageboard Image Scraper
+# written by Truls Edvard Stokke <trulses@gmail.com>
+
+__doc__ = """Imageboard Image Scraper.
+
+Example:
+    $ ./imagescraper.py http://boards.4chan.org/g/thread/15898894
+
+    This will create a g/15898894/ directory and download the images to that folder.
+    You may also give links to 4chan boards as arguments.
+
+Usage:
+  imagescraper.py [-q] [-k] [-p] [-t <num>] [-o <dir>] [-l <time>] <links>...
+  imagescraper.py -h | --help
+  imagescraper.py --version
+
+Arguments:
+  <link>    Links to 4chan threads or boards
+
+Options:
+  -h, --help           Show this screen.
+  --version            Show version.
+  -q, --quiet          Do not print messages to screen
+  -k, --keep-names     Keep original image names
+  -p, --save-page      Save the thread html as well, to open up later
+  -t, --threads <num>  Number of threads to use for multi-threading [default: 32]
+  -o, --output <dir>   Where to create the directory hierarchy [default: .]
+  -l, --listen <time>  Download images continuiously from given link. Accepts an
+                       optional format string where you specify minutes with 'm'
+                       and seconds with 's' [example: 1m30s]
+
+Requirements:
+  Python2.
+"""
+
+# config
+_version = 'Imageboard Image Scraper 1.0.0'
 
 import os
 import re
 import sys
 import time
-import argparse
+from Lib.ext.docopt import docopt
 import Lib
 
-parser = argparse.ArgumentParser(
-    description="Download images from 4chan into a directory hierarchy."
-)
+args = docopt(__doc__, version=_version)
 
-parser.add_argument(
-    "links", type=str, nargs="+",
-    help="links to 4chan threads or boards"
-)
-
-parser.add_argument(
-    "--version", action="version",
-    version="%(prog)s v1.0",
-    help="show the version of this program and exit"
-)
-
-parser.add_argument(
-    "-t", "--threads", metavar="n", type=int, default = 32,
-    help="number of threads to use for multi-threading"
-)
-
-parser.add_argument(
-    "-o", "--output", metavar="directory", type=str,
-    default=".",
-    help="where to create the directory hierarchy"
-)
-
-parser.add_argument(
-    "-q", "--quiet", action="store_true",
-    help="do not print messages to screen"
-)
-
-parser.add_argument(
-    "-k", "--keep-names", action="store_true",
-    help="keep original names on images"
-)
-
-parser.add_argument(
-    "-l", "--listen", nargs="?",
-    const="1m", metavar="time",
-    help='''download images continually from link,
-accepts an optional format string for time where you specify minutes with m and seconds with s
-example: \"1m30s\"'''
-)
-
-args = parser.parse_args()
-Lib.globals.acquire(args)
+Lib.globals.acquire({
+    'quiet': args['--quiet'],
+    'keep_names': args['--keep-names'],
+    'save_page': args['--save-page'],
+    'threads': int(args['--threads']),
+    'output': args['--output'],
+    'listen': args['--listen'],
+    'links': args['<links>'],
+    })
 
 def quietly_print(s, outfile=sys.stdout):
-    if not args.quiet:
+    if not Lib.globals.quiet:
         outfile.write(s + os.linesep)
 
-if not os.path.isdir(args.output):
-    print >> sys.stderr, "Error: %s is not a valid directory." % (args.output)
+if not os.path.isdir(Lib.globals.output):
+    print >> sys.stderr, "Error: %s is not a valid directory." % (Lib.globals.output)
 else:
-    os.chdir(args.output)
+    os.chdir(Lib.globals.output)
 
 update_interval = 0
-if args.listen:
+if Lib.globals.listen:
     try:
-        seconds = re.search(r"(-?\d*\.?\d*)s", args.listen)
-        minutes = re.search(r"(-?\d*\.?\d*)m", args.listen)
+        seconds = re.search(r"(-?\d*\.?\d*)s", Lib.globals.listen)
+        minutes = re.search(r"(-?\d*\.?\d*)m", Lib.globals.listen)
 
         if seconds:
             update_interval += float(seconds.groups()[0])
@@ -78,11 +80,11 @@ if args.listen:
             raise ValueError("Negative update interval %f does not make sense." % (update_interval))
     except Exception as e:
         print >> sys.stderr, "Malformed input: %s is invalid as a format string for time, recieved error: %s" % (
-            args.listen, str(e))
+            Lib.globals.listen, str(e))
         exit(1)
 
 links = []
-for link in args.links:
+for link in Lib.globals.links:
     try:
         links.append(Lib.Link.classify(link))
     except Exception as e:
@@ -92,7 +94,7 @@ if not links:
     print >> sys.stderr, "No valid links, exiting with failure."
     exit(1)
 
-pool = Lib.Threads.ThreadPool(args.threads)
+pool = Lib.Threads.ThreadPool(Lib.globals.threads)
 Lib.globals.downloadedFiles = []
 Lib.globals.links = links
 
@@ -103,10 +105,10 @@ def report():
         for file in Lib.globals.downloadedFiles:
             totalBytes += os.path.getsize(file)
 
-        quietly_print("Downloaded %d file(s) (%d bytes) in %f second(s) (%f bytes per second)." % (
-                len(Lib.globals.downloadedFiles), totalBytes,
-                timer, totalBytes/timer)
-                      )
+        quietly_print("Downloaded %d file(s) (%s) in %f second(s) (%s per second)." % (
+                len(Lib.globals.downloadedFiles), Lib.Util.bytes_to_human(totalBytes),
+                timer, Lib.Util.bytes_to_human(totalBytes/timer))
+        )
 
         Lib.globals.downloadedFiles = []
 
@@ -125,7 +127,7 @@ while links:
 
         report()
 
-        if not args.listen:
+        if not Lib.globals.listen:
             break
 
         if timer < update_interval:
