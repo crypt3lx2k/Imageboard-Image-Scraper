@@ -46,6 +46,9 @@ import Lib
 
 args = docopt(__doc__, version=_version)
 
+print args
+exit(0)
+
 Lib.globals.acquire({
     'quiet': args['--quiet'],
     'keep_names': args['--keep-names'],
@@ -106,9 +109,9 @@ def report():
             totalBytes += os.path.getsize(file)
 
         quietly_print("Downloaded %d file(s) (%s) in %f second(s) (%s per second)." % (
-                len(Lib.globals.downloadedFiles), Lib.bytes_to_human(totalBytes),
-                timer, Lib.bytes_to_human(totalBytes/timer))
-                      )
+                len(Lib.globals.downloadedFiles), Lib.Util.bytes_to_human(totalBytes),
+                timer, Lib.Util.bytes_to_human(totalBytes/timer))
+        )
 
         Lib.globals.downloadedFiles = []
 
