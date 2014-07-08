@@ -11,9 +11,9 @@ Example:
     You may also give links to 4chan boards as arguments.
 
 Usage:
-  imagescrapter.py [-q] [-k] [-p] [-t <num>] [-o <dir>] [-l <time>] <links>...
-  imagescrapter.py -h | --help
-  imagescrapter.py --version
+  imagescraper.py [-q] [-k] [-p] [-t <num>] [-o <dir>] [-l <time>] <links>...
+  imagescraper.py -h | --help
+  imagescraper.py --version
 
 Arguments:
   <link>    Links to 4chan threads or boards
