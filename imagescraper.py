@@ -1,138 +1,130 @@
-#!/usr/bin/env python2
-# Imageboard Image Scraper
-# written by Truls Edvard Stokke <trulses@gmail.com>
-
-__doc__ = """Imageboard Image Scraper.
-
-Example:
-    $ ./imagescraper.py http://boards.4chan.org/g/thread/15898894
-
-    This will create a g/15898894/ directory and download the images to that folder.
-    You may also give links to 4chan boards as arguments.
-
-Usage:
-  imagescraper.py [-q] [-k] [-p] [-t <num>] [-o <dir>] [-l <time>] <links>...
-  imagescraper.py -h | --help
-  imagescraper.py --version
-
-Arguments:
-  <link>    Links to 4chan threads or boards
-
-Options:
-  -h, --help           Show this screen.
-  --version            Show version.
-  -q, --quiet          Do not print messages to screen
-  -k, --keep-names     Keep original image names
-  -p, --save-page      Save the thread html as well, to open up later
-  -t, --threads <num>  Number of threads to use for multi-threading [default: 32]
-  -o, --output <dir>   Where to create the directory hierarchy [default: .]
-  -l, --listen <time>  Download images continuiously from given link. Accepts an
-                       optional format string where you specify minutes with 'm'
-                       and seconds with 's' [example: 1m30s]
-
-Requirements:
-  Python2.
-"""
-
-# config
-_version = 'Imageboard Image Scraper 1.0.0'
+#! /usr/bin/env python
 
 import os
-import re
-import sys
 import time
-from Lib.ext.docopt import docopt
-import Lib
 
-args = docopt(__doc__, version=_version)
+from iwi.core      import classify
+from iwi.core      import Post
+from iwi.threading import Pool
 
-Lib.globals.acquire({
-    'quiet': args['--quiet'],
-    'keep_names': args['--keep-names'],
-    'save_page': args['--save-page'],
-    'threads': int(args['--threads']),
-    'output': args['--output'],
-    'listen': args['--listen'],
-    'links': args['<links>'],
-    })
+from common import logger
+from common import parameters
 
-def quietly_print(s, outfile=sys.stdout):
-    if not Lib.globals.quiet:
-        outfile.write(s + os.linesep)
+def get_filename (directory, post, keep_names=False):
+    """
+    Returns the path where the downloaded image should be written.
+    """
+    return os.sep.join ((
+        directory, post.board, str(post.thread),
+        (post.image.filename if keep_names else str(post.image.tim)) + \
+            post.image.ext
+    ))
 
-if not os.path.isdir(Lib.globals.output):
-    print >> sys.stderr, "Error: %s is not a valid directory." % (Lib.globals.output)
-else:
-    os.chdir(Lib.globals.output)
+def scrape_images (directory, keep_names, *links):
+    """
+    Downloads images from links.
+    """
+    pool = Pool(num_threads=parameters.num_threads)
 
-update_interval = 0
-if Lib.globals.listen:
-    try:
-        seconds = re.search(r"(-?\d*\.?\d*)s", Lib.globals.listen)
-        minutes = re.search(r"(-?\d*\.?\d*)m", Lib.globals.listen)
+    def work (unit):
+        if isinstance(unit, Post):
+            if not unit.image:
+                return
 
-        if seconds:
-            update_interval += float(seconds.groups()[0])
-        if minutes:
-            update_interval += float(minutes.groups()[0]) * 60
+            filename = get_filename (
+                directory, unit, keep_names
+            )
 
-        if update_interval < 0:
-            raise ValueError("Negative update interval %f does not make sense." % (update_interval))
-    except Exception as e:
-        print >> sys.stderr, "Malformed input: %s is invalid as a format string for time, recieved error: %s" % (
-            Lib.globals.listen, str(e))
+            if not os.path.exists(filename):
+                logger.info('downloading %s', unit.image)
+                image_data = unit.image.download(bypass_cache=True)
+
+                return filename, image_data
+
+            logger.debug('%s already downloaded', filename)
+
+            return
+
+        logger.info('working %r', unit)
+        for e in unit.process():
+            pool.push(work, e)
+
+    for link in map(classify, links):
+        pool.push(work, link)
+    pool.join()
+
+    logger.info('Join complete.')
+
+    downloaded = pool.get_results()
+    pool.close()
+
+    logger.info('Setting up directories')
+
+    directories = set (
+        map (
+            lambda t : os.path.split(t[0])[0],
+            downloaded
+        )
+    )
+
+    for directory in directories:
+        if not os.path.exists(directory):
+            logger.debug('making directory %s', directory)
+            os.makedirs(directory)
+
+    logger.info('Writing images to disk.')
+
+    for filename, image_data in downloaded:
+        with open(filename, 'w') as outfile:
+            outfile.write(image_data)
+
+if __name__ == '__main__':
+    from common import CommonParser
+
+    parser = CommonParser (
+        description='Scrapes images from the given 4chan links.'
+    )
+
+    parser.add_argument (
+        'link', nargs='+',
+        help='boards/pages/threads, may either be full URLs or names like /g/'
+    )
+
+    parser.add_argument (
+        '-o', '--output',
+        metavar='directory',
+        default='.',
+        help='where to create the directory hierarchy, defaults to \'.\''
+    )
+
+    parser.add_argument (
+        '-k', '--keep-names', action='store_true',
+        help='keep original file names on images, defaults to False'
+    )
+
+    parser.add_argument (
+        '-l', '--listen', nargs='?',
+        const=60.0, metavar='time', type=float,
+        help='download images continually from link, accepts an optional time given in seconds, defaults to 60.0'
+    )
+
+    args = parser.parse_args()
+
+    if parser.sanity_check(args):
         exit(1)
 
-links = []
-for link in Lib.globals.links:
-    try:
-        links.append(Lib.Link.classify(link))
-    except Exception as e:
-        quietly_print("Error while processing link %s, will continue if at all possible." % (e))
+    parser.pre_process(args)
 
-if not links:
-    print >> sys.stderr, "No valid links, exiting with failure."
-    exit(1)
-
-pool = Lib.Threads.ThreadPool(Lib.globals.threads)
-Lib.globals.downloadedFiles = []
-Lib.globals.links = links
-
-timer = 0
-def report():
-    if Lib.globals.downloadedFiles:
-        totalBytes = 0
-        for file in Lib.globals.downloadedFiles:
-            totalBytes += os.path.getsize(file)
-
-        quietly_print("Downloaded %d file(s) (%s) in %f second(s) (%s per second)." % (
-                len(Lib.globals.downloadedFiles), Lib.Util.bytes_to_human(totalBytes),
-                timer, Lib.Util.bytes_to_human(totalBytes/timer))
-        )
-
-        Lib.globals.downloadedFiles = []
-
-while links:
-    try:
+    while True:
         timer = time.time()
-
-        for link in links:
-            quietly_print("processing link: %s" % (link))
-            pool.push(link)
-
-        quietly_print("waiting for downloads to finish")
-        pool.join()
-
+        scrape_images(args.output, args.keep_names, *args.link)
         timer = time.time() - timer
 
-        report()
-
-        if not Lib.globals.listen:
+        if not args.listen:
             break
 
-        if timer < update_interval:
-            quietly_print("sleeping for %f seconds" % (update_interval - timer))
-            time.sleep(update_interval - timer)
-    except Exception as e:
-        quietly_print("Recieved: %s" % (e))
-        exit(0)
+        if timer < args.listen:
+            logger.info('sleeping for %f seconds', args.listen - timer)
+            time.sleep(args.listen - timer)
+
+    parser.post_process(args)
