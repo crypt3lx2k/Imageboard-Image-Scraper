@@ -145,7 +145,7 @@ class WebCache (object):
         outfile may be a filename or an open file-like object.
         """
         if isinstance(outfile, str):
-            outfile = open(outfile, 'w')
+            outfile = open(outfile, 'wb')
 
         pickle.dump(self.cache, outfile, protocol=-1)
 
@@ -178,7 +178,7 @@ class WebCache (object):
         """
         try:
             if isinstance(infile, str):
-                infile = open(infile)
+                infile = open(infile, 'rb')
 
             self.cache = pickle.load(infile)
         except IOError:
