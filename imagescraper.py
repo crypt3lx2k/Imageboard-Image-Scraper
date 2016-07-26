@@ -75,7 +75,7 @@ def scrape_images (directory, keep_names, *links):
     logger.info('Writing images to disk.')
 
     for filename, image_data in downloaded:
-        with open(filename, 'w') as outfile:
+        with open(filename, 'wb') as outfile:
             outfile.write(image_data)
 
 if __name__ == '__main__':
