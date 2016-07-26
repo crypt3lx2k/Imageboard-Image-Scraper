@@ -15,7 +15,7 @@ defaults = {
 
     # flags
     'debug'       : False,
-    'https'       : False,
+    'https'       : True,
     'offline'     : False,
     'quiet'       : False
 }

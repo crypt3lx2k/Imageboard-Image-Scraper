@@ -24,7 +24,7 @@ optional arguments:
   --log-file file       log file, defaults to <stderr>
   --num-threads n       how many threads to use, defaults to 16
   --debug               toggle debug information, defaults to False
-  --https               toggle HTTPS, defaults to False
+  --https               toggle HTTPS, defaults to True
   --quiet               toggle quiet mode, defaults to False
   -o directory, --output directory
                         where to create the directory hierarchy, defaults to
