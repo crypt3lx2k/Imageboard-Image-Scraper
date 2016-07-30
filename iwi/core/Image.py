@@ -8,12 +8,18 @@ class Image (WebEntity):
     """
     Represents an image.
     """
-    def __init__ (self, board, tim, ext, filename):
+    def __init__ (self, board, tim, ext, filename, md5, fsize, w, h):
         self.board = board
         self.tim = tim
         self.ext = ext
 
         self.filename = filename
+
+        self.md5 = md5
+        self.fsize = fsize
+
+        self.w = w
+        self.h = h
 
     def __str__ (self):
         """
@@ -30,7 +36,9 @@ class Image (WebEntity):
                 ', '.join(map (
                               repr, (
                                   self.board, self.tim,
-                                  self.ext, self.filename
+                                  self.ext, self.filename,
+                                  self.md5, self.fsize,
+                                  self.w, self.h
                               )
                 )),
                 self=self
