@@ -72,7 +72,9 @@ class Thread (WebEntity):
                 post['image'] = Image (
                     self.board,
                     post['tim'], post['ext'].encode('utf8'),
-                    post['filename'].encode('utf8')
+                    post['filename'].encode('utf8'),
+                    post['md5'].encode('utf8'), post['fsize'],
+                    post['w'], post['h']
                 )
 
             posts.append (

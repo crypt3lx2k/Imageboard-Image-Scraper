@@ -97,6 +97,13 @@ class Post (WebEntity):
         )
 
     @property
+    def apiurl (self):
+        """
+        Returns an API URL with the relevant contents for the Post.
+        """
+        return self.thread.apiurl
+
+    @property
     def imageurl (self):
         """
         Returns an url to the image of this post.
